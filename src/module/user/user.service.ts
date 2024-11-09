@@ -21,12 +21,16 @@ export class UserService {
 
     async findByEmail(email: string): Promise<UserDto> {
         try {
-            return this.userRepository.findOneOrFail({
+            const user = await this.userRepository.findOne({
                 where: {
                     email: email,
                     deletedAt: null
                 }
             });
+            return {
+                name: user.name,
+                email: user.email
+            }
         } catch (error) {
             throw new Error('User not found');
         }
