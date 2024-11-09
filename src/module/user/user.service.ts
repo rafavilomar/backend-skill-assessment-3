@@ -3,9 +3,11 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "./user.entity";
 import { Repository } from "typeorm";
 import { GetUsers200ResponseOneOfInner } from "auth0";
+import { UserDto } from "./dto/user.dto";
 
 @Injectable()
 export class UserService {
+
     constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
 
     async create(data: GetUsers200ResponseOneOfInner): Promise<void> {
@@ -17,12 +19,16 @@ export class UserService {
         });
     }
 
-    async findByEmail(email: string): Promise<User> {
-        return this.userRepository.findOne({
-            where: {
-                email: email,
-                deletedAt: null
-            }
-        });
+    async findByEmail(email: string): Promise<UserDto> {
+        try {
+            return this.userRepository.findOneOrFail({
+                where: {
+                    email: email,
+                    deletedAt: null
+                }
+            });
+        } catch (error) {
+            throw new Error('User not found');
+        }
     }
 }
