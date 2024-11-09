@@ -17,9 +17,9 @@ export class User {
     @Column()
     createdAt: Date = new Date();
 
-    @Column()
+    @Column({nullable: true})
     updatedAt?: Date;
 
-    @Column()
+    @Column({nullable: true})
     deletedAt?: Date;
 }
