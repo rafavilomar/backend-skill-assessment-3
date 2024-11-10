@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ResponseDto } from "src/utils/response.dto";
 import { ProductDto } from "./dto/product.dto";
 import { ProductResumeDto } from "./dto/product-resume.dto";
 import { AuthGuard } from "@nestjs/passport";
-import { CustomerGuard } from "../auth/guard/customer.guard";
+import { AdminGuard } from "../auth/guard/admin.guard";
 
 @Controller('api/product')
 export class ProductController {
@@ -30,12 +30,22 @@ export class ProductController {
     }
 
     @Post()
-    @UseGuards(AuthGuard('jwt'), CustomerGuard)
+    @UseGuards(AuthGuard('jwt'), AdminGuard)
     async create(@Body() data: ProductDto): Promise<ResponseDto<ProductDto>> {
         return {
             status: 200,
             data: await this.productService.create(data),
             message: 'Product created'
+        }
+    }
+
+    @Put(':id')
+    @UseGuards(AuthGuard('jwt'), AdminGuard)
+    async update(@Param('id') id: number, @Body() data: Partial<ProductDto>): Promise<ResponseDto<ProductDto>> {
+        return {
+            status: 200,
+            data: await this.productService.update(id, data),
+            message: 'Product updated'
         }
     }
 }

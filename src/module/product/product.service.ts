@@ -53,4 +53,20 @@ export class ProductService {
         });
         return {...data, id: product.id}
     }
+
+    async update(id: number, data: Partial<ProductDto>): Promise<ProductDto> {
+        const oldProduct = await this.findById(id)
+        await this.productRepository.update(
+            { id: oldProduct.id }, 
+            {...data, id: oldProduct.id}
+        )
+        return {
+            id: oldProduct.id,
+            name: oldProduct.name,
+            description: oldProduct.description,
+            price: oldProduct.price,
+            stock: oldProduct.stock,
+            ...data
+        }
+    }
 }
