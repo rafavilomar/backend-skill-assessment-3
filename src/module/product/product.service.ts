@@ -42,4 +42,15 @@ export class ProductService {
             throw new NotFoundException('Product not found');
         }
     }
+
+    async create(data: ProductDto): Promise<ProductDto> {
+        const product = await this.productRepository.save({
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            stock: data.stock,
+            createdAt: new Date(),
+        });
+        return {...data, id: product.id}
+    }
 }
