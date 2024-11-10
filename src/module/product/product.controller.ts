@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ResponseDto } from "src/utils/response.dto";
 import { ProductDto } from "./dto/product.dto";
@@ -46,6 +46,17 @@ export class ProductController {
             status: 200,
             data: await this.productService.update(id, data),
             message: 'Product updated'
+        }
+    }
+
+    @Delete(':id')
+    @UseGuards(AuthGuard('jwt'), AdminGuard)
+    async delete(@Param('id') id: number): Promise<ResponseDto<void>> {
+        await this.productService.delete(id)
+        return {
+            status: 200,
+            data: null,
+            message: 'Product deleted'
         }
     }
 }

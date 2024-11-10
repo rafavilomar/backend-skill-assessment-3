@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { Product } from "./product.entity";
 import { ProductDto } from "./dto/product.dto";
 import { ProductResumeDto } from "./dto/product-resume.dto";
@@ -13,7 +13,7 @@ export class ProductService {
     async findAll(): Promise<ProductResumeDto[]> {
         const products = await this.productRepository.find({
             where: {
-                deletedAt: null
+                deletedAt: IsNull(),
             }
         });
         return products.map(product => ({
@@ -25,10 +25,10 @@ export class ProductService {
 
     async findById(id: number): Promise<ProductDto> {
         try {
-            const product = await this.productRepository.findOne({
+            const product = await this.productRepository.findOneOrFail({
                 where: {
                     id: id,
-                    deletedAt: null
+                    deletedAt: IsNull(),
                 }
             });
             return {
@@ -58,7 +58,7 @@ export class ProductService {
         const oldProduct = await this.findById(id)
         await this.productRepository.update(
             { id: oldProduct.id }, 
-            {...data, id: oldProduct.id}
+            {...data, updatedAt: new Date()}
         )
         return {
             id: oldProduct.id,
@@ -68,5 +68,10 @@ export class ProductService {
             stock: oldProduct.stock,
             ...data
         }
+    }
+
+    async delete(id: number): Promise<void> {
+        await this.findById(id)
+        await this.productRepository.update({id}, {deletedAt: new Date()})
     }
 }

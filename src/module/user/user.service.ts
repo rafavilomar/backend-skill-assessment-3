@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "./user.entity";
-import { Repository } from "typeorm";
+import { IsNull, Repository } from "typeorm";
 import { GetUsers200ResponseOneOfInner } from "auth0";
 import { UserDto } from "./dto/user.dto";
 import { RoleService } from "../role/role.service";
@@ -39,7 +39,7 @@ export class UserService {
             const user = await this.userRepository.findOneOrFail({
                 where: {
                     email: email,
-                    deletedAt: null
+                    deletedAt: IsNull(),
                 },
                 relations: {role: true}
             });
@@ -62,7 +62,7 @@ export class UserService {
             const user = await this.userRepository.findOneOrFail({
                 where: {
                     auth0Id: auth0Id,
-                    deletedAt: null
+                    deletedAt: IsNull(),
                 },
                 relations: {role: true}
             });
