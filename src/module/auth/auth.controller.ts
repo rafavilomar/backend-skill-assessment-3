@@ -10,9 +10,19 @@ export class AuthController {
 
     constructor(private readonly authService: AuthService) {}
 
-    @Post('register')
-    async createUser(@Body() data: CreateUserDto): Promise<ResponseDto<void>> {
-        await this.authService.createUser(data)
+    @Post('register-customer')
+    async createCustomer(@Body() data: CreateUserDto): Promise<ResponseDto<void>> {
+        await this.authService.createCustomer(data)
+        return {
+            status: 200,
+            data: null,
+            message: 'User created successfully'
+        }
+    }
+
+    @Post('register-admin')
+    async createAdmin(@Body() data: CreateUserDto): Promise<ResponseDto<void>> {
+        await this.authService.createAdmin(data)
         return {
             status: 200,
             data: null,

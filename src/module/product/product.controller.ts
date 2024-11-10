@@ -4,6 +4,7 @@ import { ResponseDto } from "src/utils/response.dto";
 import { ProductDto } from "./dto/product.dto";
 import { ProductResumeDto } from "./dto/product-resume.dto";
 import { AuthGuard } from "@nestjs/passport";
+import { CustomerGuard } from "../auth/guard/customer.guard";
 
 @Controller('api/product')
 export class ProductController {
@@ -29,7 +30,7 @@ export class ProductController {
     }
 
     @Post()
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), CustomerGuard)
     async create(@Body() data: ProductDto): Promise<ResponseDto<ProductDto>> {
         return {
             status: 200,

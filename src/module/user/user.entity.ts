@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Role } from "../role/role.entity";
 
 @Entity()
 export class User {
@@ -22,4 +23,7 @@ export class User {
 
     @Column({nullable: true})
     deletedAt?: Date;
+
+    @ManyToOne(() => Role, (role) => role.users, {nullable: false})
+    role: Role; 
 }
