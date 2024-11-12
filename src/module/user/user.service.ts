@@ -44,6 +44,7 @@ export class UserService {
                 relations: {role: true}
             });
             return {
+                id: user.id,
                 name: user.name,
                 email: user.email,
                 role: {
@@ -67,6 +68,7 @@ export class UserService {
                 relations: {role: true}
             });
             return {
+                id: user.id,
                 name: user.name,
                 email: user.email,
                 role: {

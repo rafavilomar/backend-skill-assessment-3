@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { IsNull, Repository } from "typeorm";
+import { In, IsNull, Repository, MoreThan, MoreThanOrEqual } from "typeorm";
 import { Product } from "./product.entity";
 import { ProductDto } from "./dto/product.dto";
 import { ProductResumeDto } from "./dto/product-resume.dto";
@@ -39,8 +39,16 @@ export class ProductService {
                 stock: product.stock
             }
         } catch (error) {
-            throw new NotFoundException('Product not found');
+            throw new NotFoundException('Product not found: ' + id);
         }
+    }
+
+    async findForOrder(id: number, quantity: number): Promise<ProductDto> {
+        const product = await this.findById(id)
+        if (product.stock < quantity) {
+            throw new Error('Not enough stock for this product: ' + product.id + ', quantity: ' + quantity)
+        }
+        return product
     }
 
     async create(data: ProductDto): Promise<ProductDto> {

@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Order } from "../order/entity/order.entity";
 
 @Entity()
 export class Product {
@@ -25,4 +26,7 @@ export class Product {
 
     @Column({nullable: true})
     deletedAt?: Date;
+
+    @ManyToMany(() => Order, (order) => order.products)
+    orders: Order[];
 }

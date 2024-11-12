@@ -10,6 +10,8 @@ import { Product } from './module/product/product.entity';
 import { ProductModule } from './module/product/product.module';
 import { Role } from './module/role/role.entity';
 import { RoleModule } from './module/role/role.module';
+import { OrderModule } from './module/order/order.module';
+import { Order } from './module/order/entity/order.entity';
 
 @Module({
   imports: [
@@ -23,13 +25,14 @@ import { RoleModule } from './module/role/role.module';
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Product, Role],
+      entities: [User, Product, Role, Order],
       synchronize: true,
     }),
     UserModule,
     AuthModule,
     ProductModule,
-    RoleModule
+    RoleModule,
+    OrderModule
   ],
   controllers: [AppController],
   providers: [AppService],
