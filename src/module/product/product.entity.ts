@@ -1,5 +1,5 @@
-import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Order } from "../order/entity/order.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ProductOrder } from "../order/entity/product-order.entity";
 
 @Entity()
 export class Product {
@@ -27,6 +27,6 @@ export class Product {
     @Column({nullable: true})
     deletedAt?: Date;
 
-    @ManyToMany(() => Order, (order) => order.products)
-    orders: Order[];
+    @OneToMany(() => ProductOrder, (productOrder) => productOrder.product)
+    productOrders: ProductOrder[];
 }

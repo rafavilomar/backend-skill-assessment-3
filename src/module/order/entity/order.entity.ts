@@ -1,7 +1,7 @@
-import { Product } from "src/module/product/product.entity";
 import { User } from "src/module/user/user.entity";
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { OrderStatus } from "../order-status.enum";
+import { ProductOrder } from "./product-order.entity";
 
 @Entity()
 export class Order {
@@ -32,7 +32,6 @@ export class Order {
     @ManyToOne(() => User, (user) => user.orders, {nullable: false})
     user: User; 
 
-    @ManyToMany(() => Product, (product) => product.orders)
-    @JoinTable()
-    products: Product[];
+    @OneToMany(() => ProductOrder, (productOrder) => productOrder.order)
+    productOrders: ProductOrder[];
 }

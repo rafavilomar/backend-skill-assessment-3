@@ -8,6 +8,8 @@ import { OrderStatus } from "./order-status.enum";
 import { ProductOrderDto } from "./dto/product-order.dto";
 import { UpdateProductOrderDto } from "./dto/update-product-order.dto";
 import { AuthService } from "../auth/auth.service";
+import { ProductOrder } from "./entity/product-order.entity";
+import { Product } from "../product/product.entity";
 
 @Injectable()
 export class OrderService {
@@ -16,22 +18,19 @@ export class OrderService {
 
     constructor(
         @InjectRepository(Order) private readonly orderRepository: Repository<Order>,
+        @InjectRepository(ProductOrder) private readonly productOrderRepository: Repository<ProductOrder>,
         private readonly productService: ProductService,
         private readonly authService: AuthService,
         ) {}
 
     async create(data: ProductOrderDto[]): Promise<OrderResponseDto> {
         const loggedUser = await this.authService.getLoggedUser()
-        let subtotal = 0;
-        const products = await Promise.all(data.map(async (productOrderDto) => {
-            const product = await this.productService.findForOrder(productOrderDto.id, productOrderDto.quantity)
-            subtotal += product.price * productOrderDto.quantity;
-            return product;
-        }))
+        const products = await this.getProductOrders(data)
+
+        const subtotal = products.reduce((acc, productOrder) => acc + productOrder.subtotal, 0);
         const tax = subtotal * this.TAX;
 
         const order = await this.orderRepository.save({
-            products: products,
             status: OrderStatus.PENDING,
             tax,
             subtotal,
@@ -39,8 +38,29 @@ export class OrderService {
             createdAt: new Date(),
             user: loggedUser,
         })
+        await this.productOrderRepository.save(
+            products.map(product => ({
+                ...product,
+                order: order,
+            }))
+        )
 
         return this.mapOrderToResponse(order)
+    }
+
+    private async getProductOrders(data: ProductOrderDto[]): Promise<ProductOrder[]> {
+        const productOrders: ProductOrder[] = []
+        for (const productOrderDto of data) {
+            const product = await this.productService.findForOrder(productOrderDto.id, productOrderDto.quantity)
+            productOrders.push({
+                id: null,
+                order: null,
+                product: {id: product.id} as Product,
+                quantity: productOrderDto.quantity,
+                subtotal: product.price * productOrderDto.quantity,
+            })
+        }
+        return productOrders
     }
 
     async findById(id: number): Promise<OrderResponseDto> {
@@ -72,26 +92,33 @@ export class OrderService {
 
     async updateProducts(data: UpdateProductOrderDto): Promise<OrderResponseDto> {
         const order = await this.findById(data.orderId)
-        
-        let newSubtotal = 0;
-        const products = await Promise.all(data.products.map(async (productOrderDto) => {
-            const product = await this.productService.findForOrder(productOrderDto.id, productOrderDto.quantity)
-            newSubtotal += product.price * productOrderDto.quantity;
-            return product;
-        }))
+        const products = await this.getProductOrders(data.products)
+
+        const newSubtotal = products.reduce((acc, productOrder) => acc + productOrder.subtotal, 0);
         const tax = newSubtotal * this.TAX;
 
-        await this.orderRepository.update(
-            { id: order.id }, 
-            {
-                products: products,
-                subtotal: newSubtotal,
-                total: newSubtotal + tax,
-                tax,
-                updatedAt: new Date(),
-            }
-        )
-        const newOrder = await this.orderRepository.findOne({where: {id: order.id}})
+        await Promise.all([
+            this.orderRepository.update(
+                { id: order.id }, 
+                {
+                    subtotal: newSubtotal,
+                    total: newSubtotal + tax,
+                    tax,
+                    updatedAt: new Date(),
+                }
+            ),
+            this.productOrderRepository.delete({order})
+        ])
+        
+        const [newOrder] = await Promise.all([
+            this.orderRepository.findOne({where: {id: order.id}}),
+            this.productOrderRepository.save(
+                products.map(product => ({
+                    ...product,
+                    order: order,
+                }))
+            )
+        ])
 
         return this.mapOrderToResponse(newOrder)
     }
@@ -102,10 +129,11 @@ export class OrderService {
             tax: order.tax,
             subtotal: order.subtotal,
             total: order.total,
-            products: order.products.map(product => ({
-                id: product.id,
-                name: product.name,
-                price: product.price,
+            products: order.productOrders.map(productOrder => ({
+                id: productOrder.product.id,
+                name: productOrder.product.name,
+                price: productOrder.product.price,
+                quantity: productOrder.quantity,
             }))
         }
     }
