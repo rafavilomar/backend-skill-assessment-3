@@ -51,4 +51,15 @@ export class OrderController {
             message: 'Order updated',
         }
     }
+
+    @Post('pay/:id')
+    @UseGuards(AuthGuard('jwt'), CustomerGuard)
+    async pay(@Param('id') id: number): Promise<ResponseDto<void>> {
+        await this.orderService.pay(id)
+        return {
+            data: null,
+            status: 200,
+            message: 'Order paid',
+        }
+    }
 }

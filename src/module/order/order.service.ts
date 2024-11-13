@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Order } from "./entity/order.entity";
 import { Repository } from "typeorm";
@@ -10,6 +10,7 @@ import { UpdateProductOrderDto } from "./dto/update-product-order.dto";
 import { AuthService } from "../auth/auth.service";
 import { ProductOrder } from "./entity/product-order.entity";
 import { Product } from "../product/product.entity";
+import { PaymentService } from "../payment/payment.service";
 
 @Injectable()
 export class OrderService {
@@ -21,6 +22,7 @@ export class OrderService {
         @InjectRepository(ProductOrder) private readonly productOrderRepository: Repository<ProductOrder>,
         private readonly productService: ProductService,
         private readonly authService: AuthService,
+        private readonly paymentService: PaymentService,
         ) {}
 
     async create(data: ProductOrderDto[]): Promise<OrderResponseDto> {
@@ -123,10 +125,45 @@ export class OrderService {
         return this.mapOrderToResponse(newOrder)
     }
 
+    async pay(orderId: number): Promise<void> {
+        const order = await this.findById(orderId)
+        if (order.status !== OrderStatus.PENDING) {
+            throw new BadRequestException('Order is not pending')
+        }
+
+        let orderPaid = false
+        try {
+            await this.paymentService.pay(order)
+            orderPaid = true
+            await this.handleProductsStock(order.products)
+            await this.orderRepository.update({id: order.id}, {status: OrderStatus.COMPLETED})
+        } catch (error) {
+            if (orderPaid) {
+                await this.orderRepository.update({id: order.id}, {status: OrderStatus.PENDING})
+            }
+            throw error
+        }
+    }
+
+    private async handleProductsStock(productsOrder: ProductOrderDto[]): Promise<void> {
+        const productsProcessed: ProductOrderDto[] = []
+
+        try {
+            for (const productOrder of productsOrder) {
+                await this.productService.reduceStock(productOrder.id, productOrder.quantity)
+                productsProcessed.push(productOrder)
+            }
+        } catch (error) {
+            await Promise.all(productsProcessed.map(productOrder => this.productService.restoreStock(productOrder.id, productOrder.quantity)))
+            throw error
+        }
+    }
+
     private mapOrderToResponse(order: Order): OrderResponseDto {
         return {
             id: order.id,
             tax: order.tax,
+            status: order.status,
             subtotal: order.subtotal,
             total: order.total,
             products: order.productOrders.map(productOrder => ({

@@ -4,6 +4,7 @@ import { In, IsNull, Repository, MoreThan, MoreThanOrEqual } from "typeorm";
 import { Product } from "./product.entity";
 import { ProductDto } from "./dto/product.dto";
 import { ProductResumeDto } from "./dto/product-resume.dto";
+import { ProductOrderResponseDto } from "../order/dto/product-order-response.dto";
 
 @Injectable()
 export class ProductService {
@@ -41,6 +42,22 @@ export class ProductService {
         } catch (error) {
             throw new NotFoundException('Product not found: ' + id);
         }
+    }
+
+    async reduceStock(productId: number, quantity: number): Promise<void> {
+        const product = await this.findForOrder(productId, quantity)
+        await this.productRepository.update(
+            {id: product.id},
+            {stock: product.stock - quantity}
+        )
+    }
+
+    async restoreStock(productId: number, quantity: number): Promise<void> {
+        const product = await this.findForOrder(productId, quantity)
+        await this.productRepository.update(
+            {id: product.id},
+            {stock: product.stock + quantity}
+        )
     }
 
     async findForOrder(id: number, quantity: number): Promise<ProductDto> {
