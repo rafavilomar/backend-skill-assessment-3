@@ -1,10 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { ProductService } from "./product.service";
-import { ResponseDto } from "src/utils/response.dto";
+import { createResponseDto, ResponseDto } from "src/utils/response.dto";
 import { ProductDto } from "./dto/product.dto";
 import { ProductResumeDto } from "./dto/product-resume.dto";
 import { AuthGuard } from "@nestjs/passport";
 import { AdminGuard } from "../auth/guard/admin.guard";
+import { ApiOkResponse, ApiSecurity } from "@nestjs/swagger";
+
 
 @Controller('api/product')
 export class ProductController {
@@ -12,6 +14,7 @@ export class ProductController {
     constructor(private readonly productService: ProductService) {}
 
     @Get()
+    @ApiOkResponse({type: createResponseDto(ProductResumeDto)})
     async findAll(): Promise<ResponseDto<ProductResumeDto[]>> {
         return {
             status: 200,
@@ -21,6 +24,7 @@ export class ProductController {
     }
 
     @Get(':id')
+    @ApiOkResponse({type: createResponseDto(ProductDto)})
     async findById(@Param('id') id: number): Promise<ResponseDto<ProductDto>> {
         return {
             status: 200,
@@ -30,7 +34,9 @@ export class ProductController {
     }
 
     @Post()
+    @ApiSecurity('bearer')
     @UseGuards(AuthGuard('jwt'), AdminGuard)
+    @ApiOkResponse({type: createResponseDto(ProductDto)})
     async create(@Body() data: ProductDto): Promise<ResponseDto<ProductDto>> {
         return {
             status: 200,
@@ -40,7 +46,9 @@ export class ProductController {
     }
 
     @Put(':id')
+    @ApiSecurity('bearer')
     @UseGuards(AuthGuard('jwt'), AdminGuard)
+    @ApiOkResponse({type: createResponseDto(ProductDto)})
     async update(@Param('id') id: number, @Body() data: Partial<ProductDto>): Promise<ResponseDto<ProductDto>> {
         return {
             status: 200,
@@ -50,7 +58,9 @@ export class ProductController {
     }
 
     @Delete(':id')
+    @ApiSecurity('bearer')
     @UseGuards(AuthGuard('jwt'), AdminGuard)
+    @ApiOkResponse({type: ResponseDto<void>})
     async delete(@Param('id') id: number): Promise<ResponseDto<void>> {
         await this.productService.delete(id)
         return {
